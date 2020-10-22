@@ -272,24 +272,31 @@ function parserToBudgetsTest(budgetsCsvPath, thresholdsCsvPath) {
 		actionHelp("test parserToBudgets", 'Test full process of creating array of budget objects using values from CSV file', 'budgetsCsvPath [thresholdsCsvPath]', 'Must include filePath to scoped budgets CSV file, ' + EOL + 'Optionally use a filePath to a CSV with thresholds for all members of scoped budgets file without defined thresholds or thresholds_file column value.');
 		return process.exit();
 	}
-	var budgetsAndErrors = localFns.parseCsvToBudgets(budgetsCsvPath, thresholdsCsvPath, true);
-	console.log(util.inspect(budgetsAndErrors, {showHidden: false, depth: null}));
-	return process.exit();
-	if (budgetsAndErrors.budgets.length > 0) {
-		console.log('Budget Objects Array:');
-		console.log(util.inspect(budgetsAndErrors.budgets, {showHidden: false, depth: null}));
-	}
-	else {
-		console.log('No valid budget objects created.');
-	}
-	if (budgetsAndErrors.errors.length > 0) {
-		console.log('Errors:');
-		console.log(util.inspect(budgetsAndErrors.errors, {showHidden: false, depth: null}));
-	}
-	else {
-		console.log('No errors creating budget objects array.');
-	}
-	return process.exit();
+	// TBD 
+	// add current CB syntax!!!
+	return localFns.parseCsvToBudgets(budgetsCsvPath, thresholdsCsvPath, true, (error, budgetsAndErrors) => {
+		if (error && error instanceof Error) {
+			console.log(util.inspect(budgetsAndErrors.budgets, {showHidden: false, depth: null}));
+			return process.exit();
+		}
+		else {
+			if (budgetsAndErrors.budgets.length > 0) {
+				console.log('Budget Objects Array:');
+				console.log(util.inspect(budgetsAndErrors.budgets, {showHidden: false, depth: null}));
+			}
+			else {
+				console.log('No valid budget objects created.');
+			}
+			if (budgetsAndErrors.errors.length > 0) {
+				console.log('Errors:');
+				console.log(util.inspect(budgetsAndErrors.errors, {showHidden: false, depth: null}));
+			}
+			else {
+				console.log('No errors creating budget objects array.');
+			}
+			return process.exit();
+		}
+	});
 }
 
 //use budget client to send request to create budget(s) using values from CSV; 
@@ -303,13 +310,18 @@ function createBudgets(parentId, budgetsCsvPath, thresholdsCsvPath) {
 		return process.exit();
 	}
 	titleBlock("Result from createBudgets:");
-	localFns.createBudgetsFromCsv(parentId, budgetsCsvPath, thresholdsCsvPath)
-	.then((results) => {
+	return localFns.createBudgetsFromCsv(parentId, budgetsCsvPath, thresholdsCsvPath, (error, results) => {
+		if (error) {
+			if (error instanceof Error) {
+				console.log(util.inspect(error, {showHidden: false, depth: null}));
+			}
+			if ('object' === typeof results && null !== results && 'object' === typeof results.errors) {
+				console.log("known errors: \n");
+				console.log(util.inspect(results.errors, {showHidden: false, depth: null}))
+			}
+			return process.exit();
+		}
 		console.log(util.inspect(results, {showHidden: false, depth: null}));
-		return process.exit();
-	})
-	.catch((e) => {
-		console.log(util.inspect(e, {showHidden: false, depth: null}));
 		return process.exit();
 	});
 }
